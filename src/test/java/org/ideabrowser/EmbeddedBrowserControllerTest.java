@@ -1,8 +1,6 @@
 package org.ideabrowser;
 
-import org.ideabrowser.EmbeddedBrowserController.EmbeddedBrowserListener;
 import org.ideabrowser.EmbeddedBrowserController.URLChecker;
-import org.ideabrowser.SearchHistoryModel.SearchHistoryListener;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -11,7 +9,7 @@ import org.mockito.Mockito;
 import java.io.IOException;
 import java.net.URL;
 
-import static org.junit.Assert.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 public class EmbeddedBrowserControllerTest {
@@ -49,7 +47,7 @@ public class EmbeddedBrowserControllerTest {
 
     @Test
     public void requestMalformedUrl() throws IOException {
-        doThrow(new IOException()).when(urlChecker).checkURL(Mockito.any());
+        doThrow(new IOException()).when(urlChecker).checkURL(any());
 
         when(settings.getSearchEngineTemplate()).thenReturn("http://searchengine.com?q=TOKEN");
         controller.request("http.://test.com");
@@ -76,7 +74,7 @@ public class EmbeddedBrowserControllerTest {
     }
 
     @Test
-    public void onLoadedWithNoHistory() {
+    public void onLoadedWithHistoryDisabled() {
         when(settings.getMaxHistorySize()).thenReturn(0);
         controller.onLoaded("title", "http://test.com");
 
@@ -94,45 +92,47 @@ public class EmbeddedBrowserControllerTest {
         // In reality though, the web engine should detect that the url is the same and it should fire onLoaded only once
         verify(viewListener, times(2)).onURLChanged("http://test.com");
 
-        verify(historyListener, Mockito.times(1)).onHistoryChanged(controller);
-
-        assertEquals(1, controller.historySize());
-        assertEquals("title", controller.historyItemDisplayName(0));
-        assertEquals("http://test.com", controller.historyItemQuery(0));
+        verify(historyListener, Mockito.times(1)).onHistoryChanged(Mockito.argThat(
+                iterator -> iterator.size() == 1 &&
+                "title".equals(iterator.displayName(0)) &&
+                "http://test.com".equals(iterator.url(0))
+        ));
     }
 
     @Test
     public void onLoadedWithMaxSize() {
         when(settings.getMaxHistorySize()).thenReturn(1);
         controller.onLoaded("title", "http://test.com");
-        controller.onLoaded("title2", "http://test2.com");
-
         verify(viewListener).onURLChanged("http://test.com");
+        verify(historyListener, Mockito.times(1)).onHistoryChanged(any());
+
+        controller.onLoaded("title2", "http://test2.com");
         verify(viewListener).onURLChanged("http://test2.com");
-
-        verify(historyListener, Mockito.times(2)).onHistoryChanged(controller);
-
-        assertEquals(1, controller.historySize());
-        assertEquals("title2", controller.historyItemDisplayName(0));
-        assertEquals("http://test2.com", controller.historyItemQuery(0));
+        verify(historyListener, Mockito.times(1)).onHistoryChanged(Mockito.argThat(
+                iterator -> iterator.size() == 1 &&
+                        "title2".equals(iterator.displayName(0)) &&
+                        "http://test2.com".equals(iterator.url(0))
+        ));
     }
 
     @Test
     public void onLoadedWithUnboundedHistory() {
         when(settings.getMaxHistorySize()).thenReturn(-1);
+
         controller.onLoaded("title", "http://test.com");
-        controller.onLoaded("title2", "http://test2.com");
-
+        verify(historyListener, Mockito.times(1)).onHistoryChanged(any());
         verify(viewListener).onURLChanged("http://test.com");
+
+        controller.onLoaded("title2", "http://test2.com");
         verify(viewListener).onURLChanged("http://test2.com");
+        verify(historyListener, Mockito.times(1)).onHistoryChanged(Mockito.argThat(
+                iterator -> iterator.size() == 2 &&
+                        "title".equals(iterator.displayName(0)) &&
+                        "http://test.com".equals(iterator.url(0)) &&
+                        "title2".equals(iterator.displayName(1)) &&
+                        "http://test2.com".equals(iterator.url(1))
 
-        verify(historyListener, Mockito.times(2)).onHistoryChanged(controller);
-
-        assertEquals(2, controller.historySize());
-        assertEquals("title", controller.historyItemDisplayName(0));
-        assertEquals("http://test.com", controller.historyItemQuery(0));
-        assertEquals("title2", controller.historyItemDisplayName(1));
-        assertEquals("http://test2.com", controller.historyItemQuery(1));
+        ));
     }
 
 

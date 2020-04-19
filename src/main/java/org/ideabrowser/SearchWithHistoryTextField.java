@@ -12,8 +12,9 @@ import java.awt.event.ActionEvent;
 /**
  * Implementation of a component where users may enter a String that will be used to perform a search. It is visually identified by a magnifying glass.
  *
- * SearchWithHistoryTextField works together with a {@link SearchHistoryModel} however it does not hold a direct reference to its model.
- * Instead, as it implements {@link org.ideabrowser.SearchHistoryModel.SearchHistoryListener}, it is designed to be registered as a listener on the model and will then be notified upon history changes with the model being passed as a argument of the callback.
+ * SearchWithHistoryTextField itself does not handle the history per se, which is done by {@link EmbeddedBrowserController} .
+ * Instead, as it implements {@link SearchHistoryListener}, it is designed to be registered as a listener on the controller
+ * and will then be notified upon history changes.
  * Please note that the history is not persisted and is only for the current session.
  *
  * It delegates all the UI stuff to {@link com.intellij.ide.ui.laf.darcula.ui.TextFieldWithPopupHandlerUI} hence ensuring
@@ -21,7 +22,7 @@ import java.awt.event.ActionEvent;
  */
 // Implementation note: since TextFieldWithPopupHandlerUI / DarculaTextFieldUI only requires a JTextField, this class does not extend ExtendableTextField.
 // Support for the loading icon is provided through TextFieldWithPopupHandlerUI's "search.extension" client property
-public class SearchWithHistoryTextField extends JTextField implements SearchHistoryModel.SearchHistoryListener {
+public class SearchWithHistoryTextField extends JTextField implements SearchHistoryListener {
 
     private static final String VARIANT_KEY = "JTextField.variant";
     private static final String SEARCH_VARIANT_VALUE = "search";
@@ -49,11 +50,11 @@ public class SearchWithHistoryTextField extends JTextField implements SearchHist
      * This method is not called internally, instead it is designed to be registered as a callback in a HistoryModel.
      */
     @Override
-    public void onHistoryChanged(SearchHistoryModel model) {
+    public void onHistoryChanged(SearchHistoryIterator historyIterator) {
          historyMenu.removeAll();
-         for (int i=0; i<model.historySize();i++) {
-             String displayName = model.historyItemDisplayName(i);
-             String text = model.historyItemQuery(i);
+         for (int i=0; i<historyIterator.size();i++) {
+             String displayName = historyIterator.displayName(i);
+             String text = historyIterator.url(i);
              final JMenuItem menuItem = new JBMenuItem(new AbstractAction(displayName) {
                  @Override
                  public void actionPerformed(ActionEvent actionEvent) {

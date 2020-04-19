@@ -1,10 +1,13 @@
 package org.ideabrowser;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.commons.lang.StringUtils;
 
 import java.io.IOException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -18,14 +21,14 @@ import java.util.Objects;
  * - A description is a short display name for a query. For queries which are urls, this will the document's name. For queries which are search items, this will the search item itself.
  * Descriptions are typically used in the search history where we don't want to display the full urls
  * <p>
- * b) to act as the history model by implementing SearchHistoryModel.
+ * b) to handle history and notify any registered {@link SearchHistoryListener}
  */
-public class EmbeddedBrowserController implements SearchHistoryModel {
+public class EmbeddedBrowserController  {
     private EmbeddedBrowserListener viewListener;
 
     private final EmbeddedBrowserSettings settings;
     private final URLChecker urlChecker;
-    private final LinkedList<HistoryItem> history;
+    private final LinkedList<SearchHistoryItem> history;
     private SearchHistoryListener historyListener;
 
     public EmbeddedBrowserController() {
@@ -45,20 +48,6 @@ public class EmbeddedBrowserController implements SearchHistoryModel {
      *
      *
      *  */
-    @Override
-    public int historySize() {
-        return history.size();
-    }
-
-    @Override
-    public String historyItemDisplayName(int i) {
-        return history.get(i).displayName;
-    }
-
-    @Override
-    public String historyItemQuery(int i) {
-        return history.get(i).url;
-    }
 
     /**
      * Adds a new item in the history.
@@ -70,41 +59,45 @@ public class EmbeddedBrowserController implements SearchHistoryModel {
         int maxHistorySize = settings.getMaxHistorySize();
         // maxHistorySize == 0 means history is disabled
         // maxHistorySize < 0 means unbounded history
-        if (maxHistorySize != 0 && historyListener != null) {
-            HistoryItem historyItem = new HistoryItem(displayName, url);
+        if (maxHistorySize != 0) {
+            SearchHistoryItem historyItem = new SearchHistoryItem(displayName, url);
             if (!history.contains(historyItem)) {
-                if (historySize() == maxHistorySize && maxHistorySize > 0) {
+                if (history.size() == maxHistorySize) {
                     history.remove();
                 }
                 history.add(historyItem);
-                historyListener.onHistoryChanged(this);
+                if (historyListener != null) {
+                    historyListener.onHistoryChanged(new SearchHistoryIteratorImpl(history));
+                }
             }
         }
     }
 
-    @Override
     public void setSearchHistoryListener(SearchHistoryListener listener) {
         this.historyListener = listener;
     }
 
     /**
      * Class that store both the displayName (to be displayed in the history drop down) and the url (to be searched for)
-     * It is designed to be used internally. Listeners will call {@link SearchHistoryModel#historyItemDisplayName(int)}
+     * It is designed to be used internally. Listeners will call {@link org.ideabrowser.SearchHistoryListener.SearchHistoryIterator#displayName(int)}
      * and other methods from the model instead which abstract away the internal representation (list or set, HistoryItem or Pair or 2 collections, ...)
      */
-    private static class HistoryItem {
+    private static class SearchHistoryItem {
         final String displayName;
         final String url;
 
-        public HistoryItem(String displayName, String url) {
+        public SearchHistoryItem(String displayName, String url) {
             this.displayName = displayName;
             this.url = url;
         }
 
         public boolean equals(Object other) {
-                HistoryItem otherHistoryItem = (HistoryItem) other;
+            if (other instanceof SearchHistoryItem) {
+                SearchHistoryItem otherHistoryItem = (SearchHistoryItem) other;
                 return Objects.equals(otherHistoryItem.displayName, displayName) &&
                         Objects.equals(otherHistoryItem.url, url);
+            }
+            return false;
         }
     }
 
@@ -161,42 +154,6 @@ public class EmbeddedBrowserController implements SearchHistoryModel {
         viewListener.onURLChanged(url);
     }
 
-    /**
-     * Defines callbacks triggered by the controller that its associated view must respond to.
-     * This interface is expected to be implemented by the view.
-     * <p>
-     * Typical workflow is:
-     * - user enters query in UI component
-     * - view listens on the component and notifies the controller
-     * - controller works out the actual url from the query and notifies the view (ie the listener) that the requested url has changed.
-     * - view loads it and notifies the controller when the loading is complete
-     * - controller notifies the view that the url has changed
-     * <p>
-     * That's quite a lot of steps but it allows for clear separation of concerns.
-     */
-    // Implementation note: last step could be removed ... if the view notifies the controller that the loading is complete, it *could* refresh the url itself ...
-    // However, it has to notify the controller any way so that the history is updated so its an opportunity to have all the logic handled in the controller at the price of an extra method in the interface (onURLChanged)
-    public interface EmbeddedBrowserListener {
-        /**
-         * Notifies the view (ie the listener) that the controller is requesting the specified url to be loaded and displayed.
-         * In most cases, the controller will request this in response to a notification from the view that user has entered a query in the query bar.
-         *
-         * @param url new url to be loaded by the view
-         */
-        void onRequestedURLChanged(String url);
-
-        /**
-         * Notifies the view (ie the listener) listener that the url has changed.
-         * <p>
-         * Unlike {@link  #onRequestedURLChanged(String)} which is triggered to request a new url to be loaded, this one is triggered AFTER an url has been loaded.
-         * This may be because user entered a new query in the query bar, or because they clicked an a new link in the loaded web page.
-         *
-         * @param url url which is currently loaded in the view
-         */
-        void onURLChanged(String url);
-
-    }
-
     // An abstraction useful for test purposes
     @FunctionalInterface
     protected interface URLChecker {
@@ -211,6 +168,42 @@ public class EmbeddedBrowserController implements SearchHistoryModel {
     // default runtime implementation of URLChecker
     private static void checkURL(URL url) throws IOException {
         url.openConnection().connect();
+    }
+
+    private static class SearchHistoryIteratorImpl implements SearchHistoryListener.SearchHistoryIterator {
+
+        private final List<SearchHistoryItem> history;
+
+        SearchHistoryIteratorImpl(List<SearchHistoryItem> history) {
+            // Clone to prevent issues in this case:
+            // SearchHistoryListener listener = new SearchHistoryListener() {
+            //      List<SearchHistoryIterator> iterators = new ArrayList();
+            //      public void onHistoryChanged(SearchHistoryIterator it) {
+            //          iterators.add(it);
+            //      }
+            // }
+            // controller.setSearchHistoryListener(listener);
+            // controller.onLoaded("title", "url");
+            // controller.onLoaded("title2", "url2");
+            // Without cloning, iterators would have 2 references to (title2, url2) ie (title, url) would be lost
+            // because both SearchHistoryListeners would reference the same list that would be modified by the second onLoaded call
+            this.history = new ArrayList<>(history);
+        }
+
+        @Override
+        public int size() {
+            return history.size();
+        }
+
+        @Override
+        public String displayName(int i) {
+            return history.get(i).displayName;
+        }
+
+        @Override
+        public String url(int i) {
+            return history.get(i).url;
+        }
     }
 
 }

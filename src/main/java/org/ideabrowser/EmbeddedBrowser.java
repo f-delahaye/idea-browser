@@ -24,7 +24,7 @@ import java.awt.*;
 // WebView however MUST be in here, so it seems like a good approach to have both javafx classes in the same place. It also makes handling the javafx / swing interoperability easier
 //  see https://docs.oracle.com/javafx/2/swing/swing-fx-interoperability.htm
 
-public class EmbeddedBrowser extends JPanel implements EmbeddedBrowserController.EmbeddedBrowserListener {
+public class EmbeddedBrowser extends JPanel implements EmbeddedBrowserListener {
 
     private final EmbeddedBrowserController controller;
     private SearchWithHistoryTextField queryBar;
