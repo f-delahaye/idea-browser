@@ -1,6 +1,5 @@
 package org.ideabrowser;
 
-import com.google.common.annotations.VisibleForTesting;
 import org.apache.commons.lang.StringUtils;
 
 import java.io.IOException;
@@ -17,7 +16,7 @@ import java.util.Objects;
  * a) to handle queries / urls / descriptions, which are 3 separate concepts.
  * - A query is what user enters in the query bar.
  * This may represent a url (http://www.w3.org) which will be loaded in the WebViewer;
- * or a search item (coronavirus) which will be sent to a search engine and whose results will be displayed in the WebViewer
+ * or a search item (Intellij plugin) which will be sent to a search engine and whose results will be displayed in the WebViewer
  * - A description is a short display name for a query. For queries which are urls, this will the document's name. For queries which are search items, this will the search item itself.
  * Descriptions are typically used in the search history where we don't want to display the full urls
  * <p>
@@ -30,6 +29,7 @@ public class EmbeddedBrowserController  {
     private final URLChecker urlChecker;
     private final LinkedList<SearchHistoryItem> history;
     private SearchHistoryListener historyListener;
+    private String lastQuery;
 
     public EmbeddedBrowserController() {
         this(EmbeddedBrowserSettings.getInstance(), EmbeddedBrowserController::checkURL);
@@ -123,6 +123,7 @@ public class EmbeddedBrowserController  {
      * Else query is appended to the configured search engine token and the resulting url is passed to the listener
      */
     public void request(String query) {
+        lastQuery = query;
         String url;
         // if a protocol is specified (we assume it is if :// is found), use it. valid protocols include http, https, file.
         // if no protocol is specified, we assume http. We could also try with and without www ...
@@ -143,14 +144,19 @@ public class EmbeddedBrowserController  {
     }
 
     /**
-     * Notifies the controller that a new document  has been loaded.
+     * Notifies th
+     * e controller that a new document  has been loaded.
      * This method is expected to be called by the view when a url change triggered by {@link EmbeddedBrowserListener#onRequestedURLChanged(String)} call has completed.
      *
-     * @param description short description of the new loaded document
-     * @param url         url of the new loaded page
+     * @param title title of the new loaded document
+     * @param url   url of the new loaded page
      */
-    public void onLoaded(String description, String url) {
-        addHistoryItem(StringUtils.isEmpty(description) ? url : description, url);
+    public void onLoaded(String title, String url) {
+        // If no title is found, we don't use url as it can be long and verbose, especially if it is a search engine based query where lots of parameters are added by the engine.
+        // Instead, we display the query that the used entered.
+        // For example, "intellij plugin" rather than "https://www.google.com/search?source=hp&ei=qZ2cXuu_AaGSrgSy47WwBg&q=intellij+plugin&oq=intellij+plugin&gs_lcp=CgZwc3ktYWIQAzIECAAQDTIECAAQDTIECAAQDTIECAAECAAQDTIECAAQDToFCAAQgwE6AggAOgQIABADOgQIABAKUIAfWP5NYItTaARwAHgCgAGcAogBzxiSAQUzLjkuNpgBAKABAaoBB2d3cy13aXqwAQA&sclient=psy-ab&ved=0ahUKEwiruNGllPHbJxDWYQ4dUDCAo&uact=5"
+        // This is one of the reasons why the controller hqs its own concept of history, and does not rely on WebEngine.getHistory feature.
+        addHistoryItem(StringUtils.isEmpty(title) ? lastQuery : title, url);
         viewListener.onURLChanged(url);
     }
 

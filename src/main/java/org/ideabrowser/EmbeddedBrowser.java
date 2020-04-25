@@ -64,6 +64,7 @@ public class EmbeddedBrowser extends JPanel implements EmbeddedBrowserListener {
         JFXPanel fxPanel = new JFXPanel();
         Platform.runLater(() -> {
             WebView view = new WebView();
+            view.setContextMenuEnabled(true);
             engine = view.getEngine();
             engine.getLoadWorker().stateProperty().addListener(this::onStateChanged);
 
@@ -78,6 +79,7 @@ public class EmbeddedBrowser extends JPanel implements EmbeddedBrowserListener {
     private void onStateChanged(ObservableValue<? extends Worker.State> property, Worker.State oldState, Worker.State newState) {
         runInEDT(() -> updateStatusLabel(newState));
         if (newState == Worker.State.SUCCEEDED) {
+            engine.executeScript("history.back()");
             controller.onLoaded(engine.getTitle(), engine.getLocation());
         }
     }
