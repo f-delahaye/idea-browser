@@ -9,7 +9,6 @@ import org.mockito.Mockito;
 import java.io.IOException;
 import java.net.URL;
 
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 public class EmbeddedBrowserControllerTest {
