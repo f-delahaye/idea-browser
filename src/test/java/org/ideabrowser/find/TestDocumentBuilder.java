@@ -48,7 +48,6 @@ public class TestDocumentBuilder {
         transformer.setOutputProperty(OutputKeys.METHOD, "html");
         transformer.setOutputProperty(OutputKeys.INDENT, "no");
         transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
-        transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4");
 
         transformer.transform(new DOMSource(document),
                 new StreamResult(new OutputStreamWriter(out, StandardCharsets.UTF_8)));

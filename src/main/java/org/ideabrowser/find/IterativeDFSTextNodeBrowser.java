@@ -1,7 +1,6 @@
 package org.ideabrowser.find;
 
 import gnu.trove.TIntArrayList;
-import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.w3c.dom.Text;
@@ -9,14 +8,14 @@ import org.w3c.dom.Text;
 public class IterativeDFSTextNodeBrowser implements TextNodeBrowser{
 
     TIntArrayList childIndex = new TIntArrayList();
-    private final Element root;
+    private final Node root;
 
     /**
      * Creates a browser starting at the first text node BELOW root.
      * So root itself will typically not be a text node itself but its parent.
      *
      */
-    public IterativeDFSTextNodeBrowser(Element root) {
+    public IterativeDFSTextNodeBrowser(Node root) {
         this.root = root;
     }
 
@@ -29,11 +28,6 @@ public class IterativeDFSTextNodeBrowser implements TextNodeBrowser{
     @Override
     public Text next(Text node) {
         return doNext(node.getParentNode());
-    }
-
-    @Override
-    public Text previous(Text node) {
-        return null;
     }
 
     private Text doNext(final Node from) {

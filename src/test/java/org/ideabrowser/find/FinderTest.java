@@ -4,8 +4,9 @@ import org.junit.Before;
 import org.junit.Test;
 import org.w3c.dom.Text;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import java.util.Collections;
+
+import static org.junit.Assert.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -13,33 +14,33 @@ public class FinderTest {
     private TextNodeBrowser nodeBrowser;
 
     private Finder finder;
-    private Text fooTextNode;
-    private Text barTextNode;
-    private Text foobarTextNode;
+    private Text fooNode;
+    private Text barNode;
+    private Text foobarNode;
 
     @Before
     public void before() {
         this.nodeBrowser = mock(TextNodeBrowser.class);
         finder = new Finder(nodeBrowser);
-        this.fooTextNode = createTextNode("foo");
-        this.barTextNode = createTextNode("bar");
-        this.foobarTextNode = createTextNode("foobar");
+        this.fooNode = createTextNode("foo");
+        this.barNode = createTextNode("bar");
+        this.foobarNode = createTextNode("foobar");
     }
 
     private Text createTextNode(String content) {
-        Text node = mock(Text.class);
+        Text node = mock(Text.class, content);
         when(node.getTextContent()).thenReturn(content);
         return node;
     }
 
     @Test
-    public void noMatchOnEmptySources() {
+    public void noMatchOnEmptyNodes() {
         when(nodeBrowser.first()).thenReturn(null);
         assertNull(finder.findNext("foo"));
     }
 
     @Test
-    public void noMatchOnEmptySource() {
+    public void noMatchOnEmptyText() {
         Text emptyNode = createTextNode("");
         when(nodeBrowser.first()).thenReturn(emptyNode);
         assertNull(finder.findNext("foo"));
@@ -47,45 +48,55 @@ public class FinderTest {
 
     @Test
     public void findNoMatch() {
-        when(nodeBrowser.first()).thenReturn(barTextNode);
+        when(nodeBrowser.first()).thenReturn(barNode);
         assertNull(finder.findNext("foo"));
     }
 
     @Test
     public void findMatch() {
-        when(nodeBrowser.first()).thenReturn(foobarTextNode);
-        assertEquals(new Finder.FindMatch(foobarTextNode, 2, foobarTextNode, 4), finder.findNext("ob"));
+        when(nodeBrowser.first()).thenReturn(foobarNode);
+        assertEquals(new FindMatch(foobarNode, 2, 4), finder.findNext("ob"));
     }
 
     @Test
     public void findMatchAtBeginning() {
-        when(nodeBrowser.first()).thenReturn(foobarTextNode);
-        assertEquals(new Finder.FindMatch(foobarTextNode, 0, foobarTextNode, 3), finder.findNext("foo"));
+        when(nodeBrowser.first()).thenReturn(foobarNode);
+        assertEquals(new FindMatch(foobarNode, 0, 3), finder.findNext("foo"));
     }
 
     @Test
     public void findMatchAtEnd() {
-        when(nodeBrowser.first()).thenReturn(foobarTextNode);
-        assertEquals(new Finder.FindMatch(foobarTextNode, 3, foobarTextNode, 6), finder.findNext("bar"));
+        when(nodeBrowser.first()).thenReturn(foobarNode);
+        assertEquals(new FindMatch(foobarNode, 3, 6), finder.findNext("bar"));
     }
 
     @Test
-    public void findMatchInSecondSource() {
-        Text first = fooTextNode;
-        Text second = barTextNode;
+    public void findMatchInSecondNode() {
+        Text first = fooNode;
+        Text second = barNode;
         when(nodeBrowser.first()).thenReturn(first);
         when(nodeBrowser.next(first)).thenReturn(second);
-        assertEquals(new Finder.FindMatch(barTextNode, 0, barTextNode, 3), finder.findNext("bar"));
+        assertEquals(new FindMatch(barNode, 0, 3), finder.findNext("bar"));
     }
 
     @Test
-    public void findMatchAcrossMultipleSources() {
-        Text first = fooTextNode;
-        Text second = barTextNode;
+    public void findMatchAcrossTwoNodes() {
+        Text first = fooNode;
+        Text second = barNode;
         when(nodeBrowser.first()).thenReturn(first);
         when(nodeBrowser.next(first)).thenReturn(second);
-        when(nodeBrowser.previous(second)).thenReturn(first); // browser is used from second to first to reconstruct the start node.
-        assertEquals(new Finder.FindMatch(fooTextNode, 2, barTextNode, 1), finder.findNext("ob"));
+        assertEquals(new FindMatch(first, 2, second, 1, Collections.emptyList()), finder.findNext("ob"));
+    }
+
+    @Test
+    public void findMatchAcrossMultipleNodes() {
+        Text first = fooNode;
+        Text second = barNode;
+        Text third = createTextNode("joe");
+        when(nodeBrowser.first()).thenReturn(first);
+        when(nodeBrowser.next(first)).thenReturn(second);
+        when(nodeBrowser.next(second)).thenReturn(third);
+        assertEquals(new FindMatch(first, 2, third, 1, Collections.singletonList(second)), finder.findNext("obarj"));
     }
 
 
@@ -94,7 +105,20 @@ public class FinderTest {
         Text foobarfoo = createTextNode("foobarfoo");
         when(nodeBrowser.first()).thenReturn(foobarfoo);
         finder.findNext("foo");
-        assertEquals(new Finder.FindMatch(foobarfoo, 6, foobarfoo, 9), finder.findNext("foo"));
+        assertEquals(new FindMatch(foobarfoo, 6, 9), finder.findNext("foo"));
     }
 
+    @Test
+    public void findMatchAcrossTwoNodesThenNext() {
+        Text first = fooNode;
+        Text second = barNode;
+        Text third = createTextNode("ob");
+        when(nodeBrowser.first()).thenReturn(first);
+        when(nodeBrowser.next(first)).thenReturn(second);
+        when(nodeBrowser.next(second)).thenReturn(third);
+        // validated by another test
+        assertNotNull(finder.findNext("ob"));
+        // validate that all internal stacks / list have been cleared up after the first match (including the previous nodes one hence why the first match was across 2 nodes)
+        assertEquals(new FindMatch(third, 0, 2), finder.findNext("ob"));
+    }
 }
