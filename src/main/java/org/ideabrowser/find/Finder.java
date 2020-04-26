@@ -2,6 +2,7 @@ package org.ideabrowser.find;
 
 import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.NotNull;
+import org.w3c.dom.Text;
 
 /**
  * A class which will parse a given DOM Document or Element to find occurrences of the specified word and will highlight them.
@@ -23,7 +24,7 @@ public class Finder {
     private final TextNodeBrowser nodeBrowser;
 
     private int indexInSource = 0;
-    private String currentNode;
+    private Text currentNode;
     private boolean first = true;
 
     public Finder(TextNodeBrowser nodeBrowser) {
@@ -33,10 +34,10 @@ public class Finder {
      * Searches index of text in source
      *
       */
-    public FindResult nextFind(String text) {
+    public FindMatch findNext(String text) {
         if (first) {
             // nodeBrowser.first() could have been called in the constructor and would have saved the extra "first" boolean
-            // but delaying until now makes unit test a bit easier.
+            // but delaying until now makes unit testing a bit easier.
             currentNode = nodeBrowser.first();
             first = false;
         }
@@ -54,7 +55,7 @@ public class Finder {
                 }
                 if (indexInText == text.length()) {
                     // The one successful return condition.
-                    return buildFindResult(currentNode, indexInSource - text.length());
+                    return buildFindMatch(currentNode, indexInSource - text.length());
                 }
                 if (indexInSource == getContent(currentNode).length()) {
                     // this has to support 2 cases:
@@ -68,29 +69,29 @@ public class Finder {
         return null;
     }
 
-    private FindResult buildFindResult(String currentNode, int startIndex) {
+    private FindMatch buildFindMatch(Text currentNode, int startIndex) {
         int tmpStartIndex = startIndex;
-        String startNode = currentNode;
+        Text startNode = currentNode;
         while (tmpStartIndex < 0) {
             startNode = nodeBrowser.previous(startNode);
             tmpStartIndex += getContent(startNode).length();
         }
 
-        return new Finder.FindResult(startNode, tmpStartIndex, currentNode, indexInSource);
+        return new FindMatch(startNode, tmpStartIndex, currentNode, indexInSource);
     }
 
-    private String getContent(String currentNode) {
-        return currentNode;
+    private String getContent(Text currentNode) {
+        return currentNode == null ? null : currentNode.getTextContent();
     }
 
-    static class FindResult {
-        String startNode;
+    static class FindMatch {
+        Text startNode;
         int startIndex;
 
-        String endNode;
+        Text endNode;
         int endIndex;
 
-        public FindResult(@NotNull String startNode, int startIndex, @NotNull String endNode, int endIndex) {
+        public FindMatch(@NotNull Text startNode, int startIndex, @NotNull Text endNode, int endIndex) {
             this.startNode = startNode;
             this.startIndex = startIndex;
             this.endNode = endNode;
@@ -101,7 +102,7 @@ public class Finder {
         public boolean equals(Object o) {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
-            FindResult that = (FindResult) o;
+            FindMatch that = (FindMatch) o;
             return startIndex == that.startIndex &&
                     endIndex == that.endIndex &&
                     startNode.equals(that.startNode) &&
