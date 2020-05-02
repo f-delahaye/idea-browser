@@ -25,13 +25,13 @@
     <depends>com.intellij.modules.platform</depends>
 
     <extensions defaultExtensionNs="com.intellij">
-        <applicationConfigurable instance="org.ideabrowser.EmbeddedBrowserConfigurable"/>
-        <applicationService serviceImplementation="org.ideabrowser.EmbeddedBrowserSettings"/>
-        <toolWindow id="Browser" anchor="right" icon="/toolWindowIcon.svg"  factoryClass="org.ideabrowser.EmbeddedBrowserFactory"/>
+        <applicationConfigurable instance="org.ideabrowser.idea.EmbeddedBrowserConfigurable"/>
+        <applicationService serviceImplementation="org.ideabrowser.idea.EmbeddedBrowserSettings"/>
+        <toolWindow id="Browser" anchor="right" icon="/toolWindowIcon.svg"  factoryClass="org.ideabrowser.idea.EmbeddedBrowserFactory"/>
     </extensions>
 
     <extensions defaultExtensionNs="org.jetbrains">
-        <urlOpener implementation="org.ideabrowser.EmbeddedBrowserUrlOpener"/>
+        <urlOpener implementation="org.ideabrowser.idea.EmbeddedBrowserUrlOpener"/>
     </extensions>
 
 </idea-plugin>

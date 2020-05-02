@@ -1,8 +1,9 @@
-package org.ideabrowser;
+package org.ideabrowser.idea;
 
 import com.intellij.openapi.options.Configurable;
 import com.intellij.ui.JBIntSpinner;
 import com.intellij.util.ui.JBUI;
+import org.ideabrowser.EmbeddedBrowser;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,7 +28,7 @@ import java.awt.*;
  * 	at com.intellij.ui.CommonActionsPanel$MyActionButton.actionPerformed(CommonActionsPanel.java:252)
  *
  * WebBrowser currently uses the Safari family whose createBrowserSpecificSettings returns null hence the error.
- * Using another predefined family would have failed too, trying to clone a ChromeSetting into a EmbeddedBrowserSettings.
+ * Using another predefined family would have failed too, trying to clone a ChromeSetting into a org.ideabrowser.idea.EmbeddedBrowserSettings.
  *
  * What was really needed here was a specific family.
  *

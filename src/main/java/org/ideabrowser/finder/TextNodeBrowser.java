@@ -1,4 +1,4 @@
-package org.ideabrowser.find;
+package org.ideabrowser.finder;
 
 import org.w3c.dom.Text;
 

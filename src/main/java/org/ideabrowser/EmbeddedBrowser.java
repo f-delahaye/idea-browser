@@ -1,5 +1,6 @@
 package org.ideabrowser;
 
+import com.intellij.ui.JBColor;
 import com.intellij.util.ui.JBUI;
 import javafx.application.Platform;
 import javafx.beans.value.ObservableValue;
@@ -12,6 +13,7 @@ import javafx.scene.web.WebView;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.KeyEvent;
 
 /**
  * JavaFX based implementation of a web viewer.
@@ -24,38 +26,63 @@ import java.awt.*;
 // WebView however MUST be in here, so it seems like a good approach to have both javafx classes in the same place. It also makes handling the javafx / swing interoperability easier
 //  see https://docs.oracle.com/javafx/2/swing/swing-fx-interoperability.htm
 
-public class EmbeddedBrowser extends JPanel implements EmbeddedBrowserListener {
+public class EmbeddedBrowser extends JPanel implements EngineControllerListener {
 
-    private final EmbeddedBrowserController controller;
+    private final EngineController engineController;
+    private final FinderController finderController;
+
     private SearchWithHistoryTextField queryBar;
 
     private WebEngine engine;
 
-    EmbeddedBrowser() {
+    public EmbeddedBrowser() {
         super(new BorderLayout());
         // Required otherwise the javafx platform is stopped when the panel is minimized and can never be restarted again
         // even if the panel is open again (unless there's a callback when a plugin is reactivated? I could not find any)
         Platform.setImplicitExit(false);
-        this.controller = new EmbeddedBrowserController();
-        controller.setViewListener(this);
+
+        this.finderController = new FinderController();
+        this.engineController = new EngineController();
+
         createComponents();
+
+        engineController.setViewListener(this);
+        engineController.setSearchHistoryListener(queryBar);
+        queryBar.addActionListener(e-> engineController.request(queryBar.getText()));
     }
 
     // creates and configures all the swing components.
     private void createComponents() {
+        // FINDER
+        JPanel finderPanel = new FinderPanel(finderController);
+
+        finderPanel.setBackground(new JBColor(new Color(192,192,192,192), new Color(192,192,192,192)));
+        finderPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        finderPanel.setAlignmentY(Component.TOP_ALIGNMENT);
+        finderPanel.setVisible(false);
+
+        // WEB VIEW
         JFXPanel fxPanel = createJavaFXScene();
+        fxPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        fxPanel.setAlignmentY(Component.TOP_ALIGNMENT);
+
+        JPanel layeredPanel = new JPanel();
+        layeredPanel.setLayout(new OverlayLayout(layeredPanel));
+
+        layeredPanel.add(finderPanel);
+        layeredPanel.add(fxPanel);
 
         queryBar = new SearchWithHistoryTextField();
-        controller.setSearchHistoryListener(queryBar);
         queryBar.setEditable(true);
-
-        queryBar.addActionListener(e-> controller.request(queryBar.getText()));
 
         JPanel topPanel = new JPanel(new BorderLayout());
         topPanel.setBorder(JBUI.Borders.empty(3));
         topPanel.add(queryBar, BorderLayout.CENTER);
         add(topPanel, BorderLayout.NORTH);
-        add(fxPanel, BorderLayout.CENTER);
+        add(layeredPanel, BorderLayout.CENTER);
+
+        registerKeyboardAction(e -> finderPanel.setVisible(true), KeyStroke.getKeyStroke("ctrl F"), JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+        registerKeyboardAction(e -> finderPanel.setVisible(false), KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
 
     }
 
@@ -72,6 +99,8 @@ public class EmbeddedBrowser extends JPanel implements EmbeddedBrowserListener {
             borderPane.setCenter(view);
             Scene scene = new Scene(borderPane);
             fxPanel.setScene(scene);
+
+            finderController.setWebEngine(engine);
         });
         return fxPanel;
     }
@@ -79,8 +108,7 @@ public class EmbeddedBrowser extends JPanel implements EmbeddedBrowserListener {
     private void onStateChanged(ObservableValue<? extends Worker.State> property, Worker.State oldState, Worker.State newState) {
         runInEDT(() -> updateStatusLabel(newState));
         if (newState == Worker.State.SUCCEEDED) {
-            engine.executeScript("history.back()");
-            controller.onLoaded(engine.getTitle(), engine.getLocation());
+            engineController.onLoaded(engine.getTitle(), engine.getLocation());
         }
     }
 

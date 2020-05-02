@@ -12,7 +12,7 @@ import java.awt.event.ActionEvent;
 /**
  * Implementation of a component where users may enter a String that will be used to perform a search. It is visually identified by a magnifying glass.
  *
- * SearchWithHistoryTextField itself does not handle the history per se, which is done by {@link EmbeddedBrowserController} .
+ * SearchWithHistoryTextField itself does not handle the history per se, which is done by {@link EngineController} .
  * Instead, as it implements {@link SearchHistoryListener}, it is designed to be registered as a listener on the controller
  * and will then be notified upon history changes.
  * Please note that the history is not persisted and is only for the current session.

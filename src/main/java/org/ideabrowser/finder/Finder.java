@@ -1,6 +1,5 @@
-package org.ideabrowser.find;
+package org.ideabrowser.finder;
 
-import org.apache.commons.lang.StringUtils;
 import org.w3c.dom.Text;
 
 import java.util.ArrayList;
@@ -37,6 +36,10 @@ public class Finder {
     public Finder(TextNodeBrowser nodeBrowser) {
         this.nodeBrowser = nodeBrowser;
     }
+
+    private boolean isNotEmpty(String str) {
+        return str != null && str.length() != 0;
+    }
     /**
      * Searches index of text in source
      *
@@ -50,8 +53,8 @@ public class Finder {
         }
         previousNodes.clear();
         int indexInText = 0;
-        if (!StringUtils.isEmpty(text)) {
-            while (!StringUtils.isEmpty(getContent(currentNode))) {
+        if (isNotEmpty(text)) {
+            while (isNotEmpty(getContent(currentNode))) {
                 if (text.charAt(indexInText) == getContent(currentNode).charAt(indexInSource)) {
                     // current search still going on
                     indexInText++;

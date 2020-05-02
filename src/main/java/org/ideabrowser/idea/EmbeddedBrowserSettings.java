@@ -1,4 +1,4 @@
-package org.ideabrowser;
+package org.ideabrowser.idea;
 
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
@@ -16,9 +16,9 @@ import org.jetbrains.annotations.Nullable;
 // Implementation note: initial version of this class was designed to extend BrowserSpecificSettings and implement createConfigurable to make it look like any of the predefined web browsers' configuration screen
 // It turned out that was not possible  see javadoc in {@link EmbeddedBrowserConfigurable}
 @State(
-        name="EmbeddedBrowserSettings",
+        name="org.ideabrowser.idea.EmbeddedBrowserSettings",
         storages = {
-                @Storage("EmbeddedBrowserSettings.xml")}
+                @Storage("org.ideabrowser.idea.EmbeddedBrowserSettings.xml")}
 )
 public class EmbeddedBrowserSettings implements PersistentStateComponent<EmbeddedBrowserSettings> {
 

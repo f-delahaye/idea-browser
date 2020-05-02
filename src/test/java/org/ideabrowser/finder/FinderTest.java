@@ -1,4 +1,4 @@
-package org.ideabrowser.find;
+package org.ideabrowser.finder;
 
 import org.junit.Before;
 import org.junit.Test;

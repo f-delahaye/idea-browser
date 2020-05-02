@@ -1,13 +1,15 @@
-package org.ideabrowser.find;
+package org.ideabrowser.finder;
 
-import gnu.trove.TIntArrayList;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.w3c.dom.Text;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class IterativeDFSTextNodeBrowser implements TextNodeBrowser{
 
-    TIntArrayList childIndex = new TIntArrayList();
+    List<Integer> childIndex = new ArrayList<>();
     private final Node root;
 
     /**

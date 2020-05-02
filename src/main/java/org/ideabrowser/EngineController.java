@@ -1,6 +1,7 @@
 package org.ideabrowser;
 
 import org.apache.commons.lang.StringUtils;
+import org.ideabrowser.idea.EmbeddedBrowserSettings;
 
 import java.io.IOException;
 import java.net.URL;
@@ -22,8 +23,8 @@ import java.util.Objects;
  * <p>
  * b) to handle history and notify any registered {@link SearchHistoryListener}
  */
-public class EmbeddedBrowserController  {
-    private EmbeddedBrowserListener viewListener;
+public class EngineController {
+    private EngineControllerListener viewListener;
 
     private final EmbeddedBrowserSettings settings;
     private final URLChecker urlChecker;
@@ -31,11 +32,11 @@ public class EmbeddedBrowserController  {
     private SearchHistoryListener historyListener;
     private String lastQuery;
 
-    public EmbeddedBrowserController() {
-        this(EmbeddedBrowserSettings.getInstance(), EmbeddedBrowserController::checkURL);
+    public EngineController() {
+        this(EmbeddedBrowserSettings.getInstance(), EngineController::checkURL);
     }
 
-    EmbeddedBrowserController(EmbeddedBrowserSettings settings, URLChecker urlChecker) {
+    EngineController(EmbeddedBrowserSettings settings, URLChecker urlChecker) {
         this.settings = settings;
         this.urlChecker = urlChecker;
         this.history = new LinkedList<>();
@@ -79,7 +80,7 @@ public class EmbeddedBrowserController  {
 
     /**
      * Class that store both the displayName (to be displayed in the history drop down) and the url (to be searched for)
-     * It is designed to be used internally. Listeners will call {@link org.ideabrowser.SearchHistoryListener.SearchHistoryIterator#displayName(int)}
+     * It is designed to be used internally. Listeners will call {@link SearchHistoryListener.SearchHistoryIterator#displayName(int)}
      * and other methods from the model instead which abstract away the internal representation (list or set, HistoryItem or Pair or 2 collections, ...)
      */
     private static class SearchHistoryItem {
@@ -109,7 +110,7 @@ public class EmbeddedBrowserController  {
      *
      *  */
 
-    public void setViewListener(EmbeddedBrowserListener listener) {
+    public void setViewListener(EngineControllerListener listener) {
         this.viewListener = listener;
     }
 
@@ -146,7 +147,7 @@ public class EmbeddedBrowserController  {
     /**
      * Notifies th
      * e controller that a new document  has been loaded.
-     * This method is expected to be called by the view when a url change triggered by {@link EmbeddedBrowserListener#onRequestedURLChanged(String)} call has completed.
+     * This method is expected to be called by the view when a url change triggered by {@link EngineControllerListener#onRequestedURLChanged(String)} call has completed.
      *
      * @param title title of the new loaded document
      * @param url   url of the new loaded page

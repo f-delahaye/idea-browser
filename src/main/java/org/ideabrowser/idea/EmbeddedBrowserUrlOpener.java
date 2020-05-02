@@ -1,4 +1,4 @@
-package org.ideabrowser;
+package org.ideabrowser.idea;
 
 import com.intellij.ide.browsers.BrowserFamily;
 import com.intellij.ide.browsers.UrlOpener;
@@ -7,6 +7,7 @@ import com.intellij.ide.browsers.WebBrowserManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
+import org.ideabrowser.EmbeddedBrowser;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

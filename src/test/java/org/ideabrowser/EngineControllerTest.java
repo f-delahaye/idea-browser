@@ -1,6 +1,7 @@
 package org.ideabrowser;
 
-import org.ideabrowser.EmbeddedBrowserController.URLChecker;
+import org.ideabrowser.EngineController.URLChecker;
+import org.ideabrowser.idea.EmbeddedBrowserSettings;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -11,21 +12,21 @@ import java.net.URL;
 
 import static org.mockito.Mockito.*;
 
-public class EmbeddedBrowserControllerTest {
+public class EngineControllerTest {
 
-    private EmbeddedBrowserController controller;
+    private EngineController controller;
     private EmbeddedBrowserSettings settings;
     private URLChecker urlChecker;
-    private EmbeddedBrowserListener viewListener;
+    private EngineControllerListener viewListener;
     private SearchHistoryListener historyListener;
 
     @Before
     public void before() {
         this.settings = mock(EmbeddedBrowserSettings.class);
         this.urlChecker = mock(URLChecker.class);
-        this.viewListener = mock(EmbeddedBrowserListener.class);
+        this.viewListener = mock(EngineControllerListener.class);
         this.historyListener = mock(SearchHistoryListener.class);
-        this.controller = new EmbeddedBrowserController(settings, urlChecker);
+        this.controller = new EngineController(settings, urlChecker);
         controller.setViewListener(viewListener);
         controller.setSearchHistoryListener(historyListener);
     }

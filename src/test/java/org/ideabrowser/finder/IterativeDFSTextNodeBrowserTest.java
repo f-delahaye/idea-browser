@@ -1,10 +1,10 @@
-package org.ideabrowser.find;
+package org.ideabrowser.finder;
 
 import org.junit.Test;
 import org.w3c.dom.Document;
 import org.w3c.dom.Text;
 
-import static org.ideabrowser.find.TestDocumentBuilder.loadDocument;
+import static org.ideabrowser.finder.TestDocumentBuilder.loadDocument;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 

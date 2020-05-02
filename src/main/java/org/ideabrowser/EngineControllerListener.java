@@ -15,7 +15,7 @@ package org.ideabrowser;
  */
 // Implementation note: last step could be removed ... if the view notifies the controller that the loading is complete, it *could* refresh the url itself ...
 // However, it has to notify the controller any way so that the history is updated so its an opportunity to have all the logic handled in the controller at the price of an extra method in the interface (onURLChanged)
-public interface EmbeddedBrowserListener {
+public interface EngineControllerListener {
     /**
      * Notifies the view (ie the listener) that the controller is requesting the specified url to be loaded and displayed.
      * In most cases, the controller will request this in response to a notification from the view that user has entered a query in the query bar.
