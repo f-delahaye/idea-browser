@@ -3,9 +3,7 @@ package org.ideabrowser;
 import javafx.application.Platform;
 import javafx.scene.web.WebEngine;
 import org.apache.commons.lang.StringUtils;
-import org.ideabrowser.finder.Finder;
 import org.ideabrowser.finder.Highlighter;
-import org.ideabrowser.finder.IterativeDFSTextNodeBrowser;
 import org.w3c.dom.Document;
 
 /**
@@ -45,17 +43,19 @@ public class FinderController {
 
     public void findNext() {
         Platform.runLater( () -> {
+            Document document = webEngine.getDocument();
+            // https://bugs.openjdk.java.net/browse/JDK-8204856
+            // document == null should not happen from jdk11 onwards
+            if (document == null) {
+                document = (Document) webEngine.executeScript("document");
+            }
             if (highlighter == null) {
-                Document document = webEngine.getDocument();
-                // https://bugs.openjdk.java.net/browse/JDK-8204856
-                // document == null should not happen from jdk11 onwards
-                if (document == null) {
-                    document = (Document) webEngine.executeScript("document");
-                }
-                highlighter = new Highlighter(new Finder(new IterativeDFSTextNodeBrowser(document.getElementsByTagName("body").item(0))));
+                highlighter = Highlighter.from(document.getElementsByTagName("body").item(0));
+            } else {
+                highlighter.clear(document);
             }
 
-            if (highlighter.hightlightNext(text)) {
+            if (highlighter.highlightNext(text)) {
                 webEngine.executeScript("document.getElementsByClassName(\"idea_browser\")[0].scrollIntoView();");
                 listener.enableNextOccurrence();
             } else {

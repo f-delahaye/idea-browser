@@ -25,54 +25,53 @@ public class HighlighterTest {
 
     @Test
     public void matchInSameNode() throws Exception {
-        String expectedHighlightedContent = "<html><body>fo<mark class=\"idea_browser\">ob</mark>ar</body></html>";
 
-        String initialContent = "<html><body>foobar</body></html>";
-        Document document = TestDocumentBuilder.loadDocument(initialContent);
+        Document document = TestDocumentBuilder.loadDocument("<html><body>foobar</body></html>");
+        Document initialDocument = (Document) document.cloneNode(true);
+
         Text foobarText = (Text)  document.getElementsByTagName("body").item(0).getFirstChild();
         when(finder.findNext("ob")).thenReturn(new FindMatch(foobarText, 2, 4));
 
-        assertTrue(highlighter.hightlightNext("ob"));
-        assertEquals(expectedHighlightedContent, TestDocumentBuilder.toString(document));
+        assertTrue(highlighter.highlightNext("ob"));
+        assertEquals("<html><body>fo<mark class=\"idea_browser\">ob</mark>ar</body></html>", TestDocumentBuilder.toString(document));
 
         highlighter.clear(document);
-        assertEquals(initialContent, TestDocumentBuilder.toString(document));
+        assertTrue(initialDocument.isEqualNode(document));
     }
 
     @Test
     public void matchInTwoNodes() throws Exception {
-        String expectedContent = "<html><body>fo<mark class=\"idea_browser\">o</mark><span><mark class=\"idea_browser\">b</mark>ar</span></body></html>";
 
-        String initialContent = "<html><body>foo<span>bar</span></body></html>";
-        Document document = TestDocumentBuilder.loadDocument(initialContent);
+        Document document = TestDocumentBuilder.loadDocument("<html><body>foo<span>bar</span></body></html>");
+        Document initialDocument = (Document) document.cloneNode(true);
+
         Text fooText = (Text)  document.getElementsByTagName("body").item(0).getFirstChild();
         Text barText = (Text)  document.getElementsByTagName("span").item(0).getFirstChild();
         when(finder.findNext("ob")).thenReturn(new FindMatch(fooText, 2, barText, 1, Collections.emptyList()));
 
-        assertTrue(highlighter.hightlightNext("ob"));
-        assertEquals(expectedContent, TestDocumentBuilder.toString(document));
+        assertTrue(highlighter.highlightNext("ob"));
+        assertEquals("<html><body>fo<mark class=\"idea_browser\">o</mark><span><mark class=\"idea_browser\">b</mark>ar</span></body></html>", TestDocumentBuilder.toString(document));
 
         highlighter.clear(document);
-        assertEquals(initialContent, TestDocumentBuilder.toString(document));
-
+        assertTrue(initialDocument.isEqualNode(document));
     }
 
     @Test
     public void matchInThreeNodes() throws Exception {
-        String expectedContent = "<html><body>fo<mark class=\"idea_browser\">o</mark><span><mark class=\"idea_browser\">bar</mark></span><p><mark class=\"idea_browser\">j</mark>oe</p></body></html>";
 
-        String initialContent = "<html><body>foo<span>bar</span><p>joe</p></body></html>";
-        Document document = TestDocumentBuilder.loadDocument(initialContent);
+        Document document = TestDocumentBuilder.loadDocument("<html><body>foo<span>bar</span><p>joe</p></body></html>");
+        Document initialDocument = (Document) document.cloneNode(true);
+
         Text fooNode = (Text)  document.getElementsByTagName("body").item(0).getFirstChild();
         Text barNode = (Text)  document.getElementsByTagName("span").item(0).getFirstChild();
         Text joeNode = (Text)  document.getElementsByTagName("p").item(0).getFirstChild();
         when(finder.findNext("obarj")).thenReturn(new FindMatch(fooNode, 2, joeNode, 1, Collections.singletonList(barNode)));
 
-        assertTrue(highlighter.hightlightNext("obarj"));
-        assertEquals(expectedContent, TestDocumentBuilder.toString(document));
+        assertTrue(highlighter.highlightNext("obarj"));
+        assertEquals("<html><body>fo<mark class=\"idea_browser\">o</mark><span><mark class=\"idea_browser\">bar</mark></span><p><mark class=\"idea_browser\">j</mark>oe</p></body></html>", TestDocumentBuilder.toString(document));
 
         highlighter.clear(document);
-        assertEquals(initialContent, TestDocumentBuilder.toString(document));
+        assertTrue(initialDocument.isEqualNode(document));
 
     }
 
