@@ -10,10 +10,10 @@ import org.w3c.dom.Document;
  * Brings the capabilities of Finder / Highlighter to the WebEngine/EmbeddedBrowser world.
  * It also handles creating a new highlighter upon first call to next, ...
  */
-public class FinderController {
+public class FinderController implements FinderControllerListener {
     private Highlighter highlighter;
     private WebEngine webEngine;
-    private FinderControllerListener listener;
+    private FinderControllerListener listener = this;
     private String text;
 
     public FinderController() {
@@ -70,5 +70,15 @@ public class FinderController {
      */
     public void setWebEngine(WebEngine webEngine) {
         this.webEngine = webEngine;
+    }
+
+    @Override
+    public void enableNextOccurrence() {
+        // Implements a default NoOp listener
+    }
+
+    @Override
+    public void disableNextOccurrence() {
+        // Implements a default NoOp listener
     }
 }

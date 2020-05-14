@@ -10,10 +10,10 @@ import static org.junit.Assert.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class FinderTest {
+public class SimpleFinderTest {
     private TextNodeBrowser nodeBrowser;
 
-    private Finder finder;
+    private SimpleFinder finder;
     private Text fooNode;
     private Text barNode;
     private Text foobarNode;
@@ -21,7 +21,7 @@ public class FinderTest {
     @Before
     public void before() {
         this.nodeBrowser = mock(TextNodeBrowser.class);
-        finder = new Finder(nodeBrowser);
+        finder = new SimpleFinder(nodeBrowser);
         this.fooNode = createTextNode("foo");
         this.barNode = createTextNode("bar");
         this.foobarNode = createTextNode("foobar");
@@ -56,6 +56,12 @@ public class FinderTest {
     public void findMatch() {
         when(nodeBrowser.first()).thenReturn(foobarNode);
         assertEquals(new FindMatch(foobarNode, 2, 4), finder.findNext("ob"));
+    }
+
+    @Test
+    public void findMatchIsCaseInsensitive() {
+        when(nodeBrowser.first()).thenReturn(foobarNode);
+        assertEquals(new FindMatch(foobarNode, 2, 4), finder.findNext("oB"));
     }
 
     @Test

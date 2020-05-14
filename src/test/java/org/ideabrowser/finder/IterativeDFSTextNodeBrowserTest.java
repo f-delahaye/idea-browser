@@ -42,5 +42,17 @@ public class IterativeDFSTextNodeBrowserTest {
         assertNull(browser.next(third));
     }
 
+    @Test
+    public void excludedTagsAreIgnored() {
+        Document doc = loadDocument("<html><body>first<p>ignored</p>second</body></html>");
+        IterativeDFSTextNodeBrowser browser = new IterativeDFSTextNodeBrowser(doc.getDocumentElement(), "p");
+        Text first = browser.first();
+        assertEquals("first", first.getTextContent());
+        Text second = browser.next(first);
+        assertEquals("second", second.getTextContent());
+        assertNull(browser.next(second));
+
+    }
+
 
 }

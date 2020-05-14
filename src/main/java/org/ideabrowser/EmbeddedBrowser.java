@@ -1,6 +1,5 @@
 package org.ideabrowser;
 
-import com.intellij.ui.JBColor;
 import com.intellij.util.ui.JBUI;
 import javafx.application.Platform;
 import javafx.beans.value.ObservableValue;
@@ -54,9 +53,9 @@ public class EmbeddedBrowser extends JPanel implements EngineControllerListener 
     // creates and configures all the swing components.
     private void createComponents() {
         // FINDER
-        JPanel finderPanel = new FinderPanel(finderController);
+        JComponent finderPanel = new FinderPanel(finderController);
 
-        finderPanel.setBackground(new JBColor(new Color(192,192,192,192), new Color(192,192,192,192)));
+//        finderPanel.setBackground(new JBColor(new Color(192,192,192,192), new Color(192,192,192,192)));
         finderPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
         finderPanel.setAlignmentY(Component.TOP_ALIGNMENT);
         finderPanel.setVisible(false);
