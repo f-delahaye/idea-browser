@@ -150,6 +150,7 @@ public class SimpleFinderTest {
         assertEquals(new FindMatch(third, 0, 2), finder.findNext("ob"));
     }
 
+    // TODO FIXME
     @Test
     public void firstMatchAtEndOfFirstNodeThenSecondMatchWithLongerText() {
         Text first = fooNode;
