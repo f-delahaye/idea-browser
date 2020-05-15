@@ -53,9 +53,10 @@ public class SimpleFinderTest {
     }
 
     @Test
-    public void findMatch() {
+    public void findMatchThenNoMatch() {
         when(nodeBrowser.first()).thenReturn(foobarNode);
         assertEquals(new FindMatch(foobarNode, 2, 4), finder.findNext("ob"));
+        assertNull(finder.findNext("ob"));
     }
 
     @Test
@@ -114,6 +115,27 @@ public class SimpleFinderTest {
         assertEquals(new FindMatch(foobarfoo, 6, 9), finder.findNext("foo"));
     }
 
+    // same as above, but first call is findFirst.
+    // As stated in Finder's javadoc, calling findFirst and calling findNext for the first time should return the same result
+    // Most of the other tests are defined in terms of findNext which is the preferred method to be called by clients.
+    // Further tests with various combinations of findFirst/findNext are implemented in ContinuousLoopingFinder
+    @Test
+    public void findMultipleMatchesWithFindFirstThenFindNext() {
+        Text foobarfoo = createTextNode("foobarfoo");
+        when(nodeBrowser.first()).thenReturn(foobarfoo);
+        assertEquals(new FindMatch(foobarfoo, 0, 3), finder.findFirst("foo"));
+        assertEquals(new FindMatch(foobarfoo, 6, 9), finder.findNext("foo"));
+    }
+
+    @Test
+    public void findSameMatchWithFindFirstThenFindFirstAgain() {
+        Text foobarfoo = createTextNode("foobarfoo");
+        when(nodeBrowser.first()).thenReturn(foobarfoo);
+        assertEquals(new FindMatch(foobarfoo, 0, 3), finder.findFirst("foo"));
+        // unlike scenario above, calling findFirst again finds the first match again, not the second one.
+        assertEquals(new FindMatch(foobarfoo, 0, 3), finder.findFirst("foo"));
+    }
+
     @Test
     public void findMatchAcrossTwoNodesThenNext() {
         Text first = fooNode;
@@ -126,5 +148,15 @@ public class SimpleFinderTest {
         assertNotNull(finder.findNext("ob"));
         // validate that all internal stacks / list have been cleared up after the first match (including the previous nodes one hence why the first match was across 2 nodes)
         assertEquals(new FindMatch(third, 0, 2), finder.findNext("ob"));
+    }
+
+    @Test
+    public void firstMatchAtEndOfFirstNodeThenSecondMatchWithLongerText() {
+        Text first = fooNode;
+        Text second = barNode;
+        when(nodeBrowser.first()).thenReturn(first);
+        when(nodeBrowser.next(first)).thenReturn(second);
+        assertEquals(new FindMatch(first, 1, first, 3, Collections.emptyList()), finder.findNext("oo"));
+        assertEquals(new FindMatch(first, 1, second, 1, Collections.emptyList()), finder.findNext("oob"));
     }
 }

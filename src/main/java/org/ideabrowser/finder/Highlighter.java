@@ -39,7 +39,7 @@ public class Highlighter {
         // clear returns normalized elements so for finder to work as expected especially when calling findNext() after a first match
         // we must provide normalized elements too.
         element.normalize();
-        return new Highlighter(new TimedFinder(new SimpleFinder(new IterativeDFSTextNodeBrowser(element, "script", "form", "style"))));
+        return new Highlighter(new TimedFinder(new ContinuousLoopingFinder(new SimpleFinder(new IterativeDFSTextNodeBrowser(element, "script", "form", "style")))));
     }
 
     /**

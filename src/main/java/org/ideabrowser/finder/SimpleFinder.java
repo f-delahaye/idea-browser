@@ -17,7 +17,7 @@ import java.util.List;
  * https://stackoverflow.com/questions/14029964/execute-a-javascript-function-for-a-webview-from-a-javafx-program
  * https://stackoverflow.com/questions/13719669/append-text-webengine-javafx
  *
- * Implementing it in java is more out of curiosity, and also because of the "next/previous occurrence" feature.
+ * Implementing it in java is more out of curiosity, and also because of the "next occurrence" feature.
  * Having this in javascript would involve adding stateful behaviour in the page which does not seem very clean.
  * It is not meant to be optimized or to use well known algorithms.
  */
@@ -25,9 +25,8 @@ public class SimpleFinder implements Finder {
 
     private final TextNodeBrowser nodeBrowser;
 
-    private int indexInSource = 0;
+    private int indexInCurrentNode = 0;
     private Text currentNode;
-    private boolean first = true;
 
     // only contains the previous nodes, NOT the current one which is available in currentNode.
     // Only filled when the search spans multiple nodes. In this case, it will be ordered with the start node at index 0
@@ -40,18 +39,27 @@ public class SimpleFinder implements Finder {
     private boolean isNotEmpty(String str) {
         return str != null && str.length() != 0;
     }
+
+    @Override
+    public FindMatch findFirst(String lowerOrUpperCaseText) {
+        currentNode = nodeBrowser.first();
+        indexInCurrentNode= 0;
+        return doFind(lowerOrUpperCaseText);
+    }
+
     /**
      * Searches index of text in source
      *
       */
     @Override
     public FindMatch findNext(String lowerOrUpperCaseText) {
-        if (first) {
-            // nodeBrowser.first() could have been called in the constructor and would have saved the extra "first" boolean
-            // but delaying until now makes unit testing a bit easier.
-            currentNode = nodeBrowser.first();
-            first = false;
+        if (currentNode == null) {
+            return findFirst(lowerOrUpperCaseText);
         }
+        return doFind(lowerOrUpperCaseText);
+    }
+
+    private FindMatch doFind(String lowerOrUpperCaseText) {
         // input parameter is converted to lower case since:
         // - it is small
         // - it will be iterated over many times, once per text nodes of the document
@@ -61,21 +69,21 @@ public class SimpleFinder implements Finder {
         if (isNotEmpty(lowerOrUpperCaseText)) {
             String lowerCaseText = lowerOrUpperCaseText.toLowerCase();
             while (isNotEmpty(getContent(currentNode))) {
-                if (lowerCaseText.charAt(indexInText) == Character.toLowerCase(getContent(currentNode).charAt(indexInSource))) {
+                if (lowerCaseText.charAt(indexInText) == Character.toLowerCase(getContent(currentNode).charAt(indexInCurrentNode))) {
                     // current search still going on
                     indexInText++;
-                    indexInSource++;
+                    indexInCurrentNode++;
                 } else {
                     // mismatch, reset and start a new search
                     previousNodes.clear();
-                    indexInSource = indexInSource - indexInText + 1;
+                    indexInCurrentNode = indexInCurrentNode - indexInText + 1;
                     indexInText = 0;
                 }
                 if (indexInText == lowerCaseText.length()) {
                     // The one successful return condition.
-                    return buildFindMatch(currentNode, indexInSource - lowerCaseText.length());
+                    return buildFindMatch(currentNode, indexInCurrentNode - lowerCaseText.length());
                 }
-                if (indexInSource == getContent(currentNode).length()) {
+                if (indexInCurrentNode == getContent(currentNode).length()) {
                     // this has to support 2 cases:
                     // - current search is still going on and needs to continue on the next source or
                     // - current search has been reset and we will start a new one on the next source.
@@ -85,12 +93,10 @@ public class SimpleFinder implements Finder {
                         previousNodes.add(currentNode);
                     }
                     currentNode = nextNode;
-                    indexInSource = 0;
+                    indexInCurrentNode = 0;
                 }
             }
         }
-        // TODO refactor or document.
-        reset();
         return null;
     }
 
@@ -106,12 +112,9 @@ public class SimpleFinder implements Finder {
             tmpStartIndex += getContent(previousNode).length();
         }
 
-        return new FindMatch(previousNodes.size() > 0 ? previousNodes.get(0) : currentNode, tmpStartIndex, currentNode, indexInSource, previousNodes.isEmpty() ? Collections.emptyList() : new ArrayList<>(previousNodes.subList(1, previousNodes.size())));
+        return new FindMatch(previousNodes.size() > 0 ? previousNodes.get(0) : currentNode, tmpStartIndex, currentNode, indexInCurrentNode, previousNodes.isEmpty() ? Collections.emptyList() : new ArrayList<>(previousNodes.subList(1, previousNodes.size())));
     }
 
-    private void reset() {
-        first = true;
-    }
     private String getContent(Text currentNode) {
         return currentNode == null ? null : currentNode.getTextContent();
     }
