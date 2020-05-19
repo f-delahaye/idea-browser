@@ -7,7 +7,7 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * A class which will parse a given DOM Document or Element to find occurrences of the specified word and will highlight them.
+ * A class which will parse a given DOM Document or Element to find occurrences of the specified word.
  *
  * There are quite a few Javascript scripts which do that already and could just be injected in the html:
  * hilitor.js
@@ -21,6 +21,13 @@ import java.util.List;
  * Having this in javascript would involve adding stateful behaviour in the page which does not seem very clean.
  * It is not meant to be optimized or to use well known algorithms.
  */
+//This class underwent some refactoring to support https://github.com/f-delahaye/idea-browser/issues/1
+// which in fact has made the api simpler:
+// findFirst is gone and instead, a new constructor has been added which allows to pass in the start node and the index in the start node,
+// so findFirst can easily be replaced with new SimpleFinder()
+//
+// This new constructor may also be used to support https://github.com/f-delahaye/idea-browser/issues/1. As long as the previous match's text node and positions are kept
+// a new SimpleFinder may be created passing in those and findNext called with the new text.
 public class SimpleFinder implements Finder {
 
     private final TextNodeBrowser nodeBrowser;
@@ -32,19 +39,26 @@ public class SimpleFinder implements Finder {
     // Only filled when the search spans multiple nodes. In this case, it will be ordered with the start node at index 0
     private List<Text> previousNodes = new ArrayList<>(3);
 
+    /**
+     * Basic constructor.
+     * Creates an instance which will start the search from the start of supplied nodeBrowser.
+     */
     public SimpleFinder(TextNodeBrowser nodeBrowser) {
         this.nodeBrowser = nodeBrowser;
     }
 
-    private boolean isNotEmpty(String str) {
-        return str != null && str.length() != 0;
+    /**
+     * Advanced constructor meant to be used only as a solution for https://github.com/f-delahaye/idea-browser/issues/.
+     * The preferred way to create a Finder is to use the above constructor.
+     */
+    SimpleFinder(TextNodeBrowser nodeBrowser, Text startingNode, int indexInStartingNode) {
+        this.nodeBrowser = nodeBrowser;
+        this.indexInCurrentNode = indexInStartingNode;
+        this.currentNode =  startingNode;
     }
 
-    @Override
-    public FindMatch findFirst(String lowerOrUpperCaseText) {
-        currentNode = nodeBrowser.first();
-        indexInCurrentNode= 0;
-        return doFind(lowerOrUpperCaseText);
+    private boolean isNotEmpty(String str) {
+        return str != null && str.length() != 0;
     }
 
     /**
@@ -54,12 +68,9 @@ public class SimpleFinder implements Finder {
     @Override
     public FindMatch findNext(String lowerOrUpperCaseText) {
         if (currentNode == null) {
-            return findFirst(lowerOrUpperCaseText);
+            currentNode = nodeBrowser.first();
+            indexInCurrentNode= 0;
         }
-        return doFind(lowerOrUpperCaseText);
-    }
-
-    private FindMatch doFind(String lowerOrUpperCaseText) {
         // input parameter is converted to lower case since:
         // - it is small
         // - it will be iterated over many times, once per text nodes of the document
@@ -68,22 +79,28 @@ public class SimpleFinder implements Finder {
         int indexInText = 0;
         if (isNotEmpty(lowerOrUpperCaseText)) {
             String lowerCaseText = lowerOrUpperCaseText.toLowerCase();
-            while (isNotEmpty(getContent(currentNode))) {
-                if (lowerCaseText.charAt(indexInText) == Character.toLowerCase(getContent(currentNode).charAt(indexInCurrentNode))) {
-                    // current search still going on
-                    indexInText++;
-                    indexInCurrentNode++;
-                } else {
-                    // mismatch, reset and start a new search
-                    previousNodes.clear();
-                    indexInCurrentNode = indexInCurrentNode - indexInText + 1;
-                    indexInText = 0;
+            while (true) {
+                String content = getContent(currentNode);
+                if (!isNotEmpty(content)) {
+                    break;
+                }
+                if (indexInCurrentNode < content.length()) {
+                    if (lowerCaseText.charAt(indexInText) == Character.toLowerCase(content.charAt(indexInCurrentNode))) {
+                        // current search still going on
+                        indexInText++;
+                        indexInCurrentNode++;
+                    } else {
+                        // mismatch, reset and start a new search
+                        previousNodes.clear();
+                        indexInCurrentNode = indexInCurrentNode - indexInText + 1;
+                        indexInText = 0;
+                    }
                 }
                 if (indexInText == lowerCaseText.length()) {
                     // The one successful return condition.
                     return buildFindMatch(currentNode, indexInCurrentNode - lowerCaseText.length());
                 }
-                if (indexInCurrentNode == getContent(currentNode).length()) {
+                if (indexInCurrentNode == content.length()) {
                     // this has to support 2 cases:
                     // - current search is still going on and needs to continue on the next source or
                     // - current search has been reset and we will start a new one on the next source.

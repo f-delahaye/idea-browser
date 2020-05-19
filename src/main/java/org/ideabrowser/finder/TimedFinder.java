@@ -1,10 +1,6 @@
 package org.ideabrowser.finder;
 
-import com.intellij.openapi.diagnostic.Logger;
-
 public class TimedFinder implements Finder {
-
-    private static Logger LOG = Logger.getInstance(TimedFinder.class);
 
     Finder delegate;
 
@@ -13,18 +9,9 @@ public class TimedFinder implements Finder {
     }
 
     @Override
-    public FindMatch findFirst(String text) {
-        return findAndLogTime(text, true);
-    }
-
-    @Override
     public FindMatch findNext(String text) {
-        return findAndLogTime(text, false);
-    }
-
-    private FindMatch findAndLogTime(String text, boolean first) {
         long start = System.currentTimeMillis();
-         FindMatch match = first ? delegate.findFirst(text) : delegate.findNext(text);
+         FindMatch match = delegate.findNext(text);
          if (match != null) {
              log("Match found for " + text + " @"+match.startNode.getTextContent()+" in "+(System.currentTimeMillis() - start)+" ms");
          } else {
