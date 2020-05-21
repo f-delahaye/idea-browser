@@ -99,16 +99,15 @@ public class EmbeddedBrowser extends JPanel implements EngineControllerListener 
             Scene scene = new Scene(borderPane);
             fxPanel.setScene(scene);
 
+            engineController.setWebEngine(engine);
             finderController.setWebEngine(engine);
+
         });
         return fxPanel;
     }
 
     private void onStateChanged(ObservableValue<? extends Worker.State> property, Worker.State oldState, Worker.State newState) {
         runInEDT(() -> updateStatusLabel(newState));
-        if (newState == Worker.State.SUCCEEDED) {
-            engineController.onLoaded(engine.getTitle(), engine.getLocation());
-        }
     }
 
     private void updateStatusLabel(Worker.State newState) {

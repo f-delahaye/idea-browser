@@ -1,5 +1,8 @@
 package org.ideabrowser;
 
+import javafx.beans.value.ObservableValue;
+import javafx.concurrent.Worker;
+import javafx.scene.web.WebEngine;
 import org.apache.commons.lang.StringUtils;
 import org.ideabrowser.idea.EmbeddedBrowserSettings;
 
@@ -31,8 +34,12 @@ public class EngineController {
     private final LinkedList<SearchHistoryItem> history;
     private SearchHistoryListener historyListener;
     private String lastQuery;
+    // Not strictly required inside the controller (controller could be registered as a listener by the view which also has a reference to the engine).
+    // But this implementation is aligned with FinderController which has a reference it it (and DO require it)
+    private WebEngine webEngine;
 
-    public EngineController() {
+    public EngineController()
+    {
         this(EmbeddedBrowserSettings.getInstance(), EngineController::checkURL);
     }
 
@@ -40,6 +47,22 @@ public class EngineController {
         this.settings = settings;
         this.urlChecker = urlChecker;
         this.history = new LinkedList<>();
+    }
+
+    /**
+     * Set after constructor and not in the constructor since the controller requires the WebEngine which
+     * may not be ready when the controller is created.
+     */
+    public void setWebEngine(WebEngine webEngine) {
+        this.webEngine = webEngine;
+        webEngine.getLoadWorker().stateProperty().addListener(this::onStateChanged);
+
+    }
+
+    private void onStateChanged(ObservableValue<? extends Worker.State> property, Worker.State oldState, Worker.State newState) {
+        if (newState == Worker.State.SUCCEEDED) {
+            onLoaded(webEngine.getTitle(), webEngine.getLocation());
+        }
     }
 
     /*
@@ -145,14 +168,9 @@ public class EngineController {
     }
 
     /**
-     * Notifies th
-     * e controller that a new document  has been loaded.
-     * This method is expected to be called by the view when a url change triggered by {@link EngineControllerListener#onRequestedURLChanged(String)} call has completed.
-     *
-     * @param title title of the new loaded document
-     * @param url   url of the new loaded page
+     * Notifies the controller that a new document  has been loaded.
      */
-    public void onLoaded(String title, String url) {
+    void onLoaded(String title, String url) {
         // If no title is found, we don't use url as it can be long and verbose, especially if it is a search engine based query where lots of parameters are added by the engine.
         // Instead, we display the query that the used entered.
         // For example, "intellij plugin" rather than "https://www.google.com/search?source=hp&ei=qZ2cXuu_AaGSrgSy47WwBg&q=intellij+plugin&oq=intellij+plugin&gs_lcp=CgZwc3ktYWIQAzIECAAQDTIECAAQDTIECAAQDTIECAAECAAQDTIECAAQDToFCAAQgwE6AggAOgQIABADOgQIABAKUIAfWP5NYItTaARwAHgCgAGcAogBzxiSAQUzLjkuNpgBAKABAaoBB2d3cy13aXqwAQA&sclient=psy-ab&ved=0ahUKEwiruNGllPHbJxDWYQ4dUDCAo&uact=5"
