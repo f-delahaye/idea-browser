@@ -1,5 +1,6 @@
 package org.ideabrowser.finder;
 
+import org.ideabrowser.idea.EmbeddedBrowserSettings;
 import org.w3c.dom.*;
 
 /**
@@ -39,7 +40,9 @@ public class Highlighter {
         // clear returns normalized elements so for finder to work as expected especially when calling findNext() after a first match
         // we must provide normalized elements too.
         element.normalize();
-        return new Highlighter(new TimedFinder(EnhancedFinder.from(new IterativeDFSTextNodeBrowser(element, "script", "form", "style"))));
+        EmbeddedBrowserSettings settings = EmbeddedBrowserSettings.getInstance();
+        EnhancedFinder finder = EnhancedFinder.from(new IterativeDFSTextNodeBrowser(element, settings.getTagsToIgnore()));
+        return new Highlighter(settings.isLogsEnabled() ? new LoggingFinder(finder) : finder);
     }
 
     /**

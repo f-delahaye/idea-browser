@@ -5,6 +5,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.util.xmlb.XmlSerializerUtil;
+import org.ideabrowser.finder.LoggingFinder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,8 +27,11 @@ public class EmbeddedBrowserSettings implements PersistentStateComponent<Embedde
         return ServiceManager.getService(EmbeddedBrowserSettings.class);
     }
 
+
     private int maxHistorySize = 5;
     private String searchEngineTemplate;
+    private boolean logsEnabled = false;
+    private String[] tagsToIgnore = new String[] {"script", "form", "style"};
 
     /**
      * Returns the maximum number of items to keep in the history.
@@ -40,6 +44,21 @@ public class EmbeddedBrowserSettings implements PersistentStateComponent<Embedde
         return maxHistorySize;
     }
 
+    /**
+     * Returns whether {@link LoggingFinder} is enabled or not.
+     * We may want to enable it to see if a / which match is found e.g when the highlighter doesn't highlight anything.
+     * If the logs do show a match, it could be that it is contained in a non visible text node. See also {@link #getTagsToIgnore()}
+     */
+    public boolean isLogsEnabled() {
+        return logsEnabled;
+    }
+
+    /**
+     * Returns a list of tags which are usually non visible and hence should be ignored by the finder as it would be a really poor user experience if upon clicking "next occurrence" nothing gets highlighted.
+     */
+    public String[] getTagsToIgnore() {
+        return tagsToIgnore;
+    }
     /**
      * Returns the template to be used to generate the query sent to a search engine.
      * The template MUST contain the word TOKEN which will be replaced by the user entered query.
@@ -57,6 +76,14 @@ public class EmbeddedBrowserSettings implements PersistentStateComponent<Embedde
 
     public void setSearchEngineTemplate(String searchEngineTemplate) {
         this.searchEngineTemplate = searchEngineTemplate;
+    }
+
+    public void setLogsEnabled(boolean logsEnabled) {
+        this.logsEnabled = logsEnabled;
+    }
+
+    public void setTagsToIgnore(String[] tagsToIgnore) {
+        this.tagsToIgnore = tagsToIgnore;
     }
 
     @Override

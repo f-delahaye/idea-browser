@@ -1,6 +1,8 @@
 package org.ideabrowser;
 
 import javafx.application.Platform;
+import javafx.beans.value.ObservableValue;
+import javafx.concurrent.Worker;
 import javafx.scene.web.WebEngine;
 import org.apache.commons.lang.StringUtils;
 import org.ideabrowser.finder.Highlighter;
@@ -70,6 +72,14 @@ public class FinderController implements FinderControllerListener {
      */
     public void setWebEngine(WebEngine webEngine) {
         this.webEngine = webEngine;
+        webEngine.getLoadWorker().stateProperty().addListener(this::resetHighlighterUponNewDocument);
+
+    }
+
+    private void resetHighlighterUponNewDocument(ObservableValue<? extends Worker.State> property, Worker.State oldState, Worker.State newState) {
+        if (newState == Worker.State.RUNNING) {
+            this.highlighter = null;
+        }
     }
 
     @Override

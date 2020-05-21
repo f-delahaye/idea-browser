@@ -25,7 +25,7 @@
     <depends>com.intellij.modules.platform</depends>
 
     <extensions defaultExtensionNs="com.intellij">
-        <applicationConfigurable instance="org.ideabrowser.idea.EmbeddedBrowserConfigurable"/>
+        <applicationConfigurable groupId="tools" displayName="Embedded Browser" id="tools.EmbeddedBrowserConfigurable" instance="org.ideabrowser.idea.EmbeddedBrowserConfigurable"/>
         <applicationService serviceImplementation="org.ideabrowser.idea.EmbeddedBrowserSettings"/>
         <toolWindow id="Browser" anchor="right" icon="/toolWindowIcon.svg"  factoryClass="org.ideabrowser.idea.EmbeddedBrowserFactory"/>
     </extensions>
