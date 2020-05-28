@@ -57,13 +57,13 @@ public class EmbeddedBrowser extends JPanel implements EngineControllerListener 
 
 //        finderPanel.setBackground(new JBColor(new Color(192,192,192,192), new Color(192,192,192,192)));
         finderPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
-        finderPanel.setAlignmentY(Component.TOP_ALIGNMENT);
+        finderPanel.setAlignmentY(Component.BOTTOM_ALIGNMENT);
         finderPanel.setVisible(false);
 
         // WEB VIEW
         JFXPanel fxPanel = createJavaFXScene();
         fxPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
-        fxPanel.setAlignmentY(Component.TOP_ALIGNMENT);
+        fxPanel.setAlignmentY(Component.BOTTOM_ALIGNMENT);
 
         JPanel layeredPanel = new JPanel();
         layeredPanel.setLayout(new OverlayLayout(layeredPanel));

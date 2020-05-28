@@ -7,26 +7,16 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * A class which will parse a given DOM Document or Element to find occurrences of the specified word.
+ * Simple implementation of Finder, which is not meant to be optimized or to use well known algorithms.
  *
- * There are quite a few Javascript scripts which do that already and could just be injected in the html:
- * hilitor.js
- * mark.js
- * and some other implementations / discussions:
- * https://stackoverflow.com/questions/8644428/how-to-highlight-text-using-javascript
- * https://stackoverflow.com/questions/14029964/execute-a-javascript-function-for-a-webview-from-a-javafx-program
- * https://stackoverflow.com/questions/13719669/append-text-webengine-javafx
- *
- * Implementing it in java is more out of curiosity, and also because of the "next occurrence" feature.
- * Having this in javascript would involve adding stateful behaviour in the page which does not seem very clean.
- * It is not meant to be optimized or to use well known algorithms.
+ * https://github.com/f-delahaye/idea-browser/issues/2, while fixed, kind of indicates that a more robust algorithm may be needed
  */
-//This class underwent some refactoring to support https://github.com/f-delahaye/idea-browser/issues/1
+//This class underwent some refactoring to support idea-browser/issues/1
 // which in fact has made the api simpler:
 // findFirst is gone and instead, a new constructor has been added which allows to pass in the start node and the index in the start node,
 // so findFirst can easily be replaced with new SimpleFinder()
 //
-// This new constructor may also be used to support https://github.com/f-delahaye/idea-browser/issues/1. As long as the previous match's text node and positions are kept
+// This new constructor may also be used to support idea-browser/issues/1. As long as the previous match's text node and positions are kept
 // a new SimpleFinder may be created passing in those and findNext called with the new text.
 public class SimpleFinder implements Finder {
 
@@ -77,40 +67,48 @@ public class SimpleFinder implements Finder {
         // Text nodes on the other hand, are big (or at least they will be a lot of small nodes) and will be iterated only a few items (only once unless user loop over results)
         previousNodes.clear();
         int indexInText = 0;
+        int nodeIndex = 0; // only used for debug purposes
         if (isNotEmpty(lowerOrUpperCaseText)) {
             String lowerCaseText = lowerOrUpperCaseText.toLowerCase();
             while (true) {
-                String content = getContent(currentNode);
-                if (!isNotEmpty(content)) {
-                    break;
-                }
-                if (indexInCurrentNode < content.length()) {
-                    if (lowerCaseText.charAt(indexInText) == Character.toLowerCase(content.charAt(indexInCurrentNode))) {
-                        // current search still going on
-                        indexInText++;
-                        indexInCurrentNode++;
-                    } else {
-                        // mismatch, reset and start a new search
-                        previousNodes.clear();
-                        indexInCurrentNode = indexInCurrentNode - indexInText + 1;
-                        indexInText = 0;
+                try {
+                    String content = getContent(currentNode);
+                    if (!isNotEmpty(content)) {
+                        break;
                     }
-                }
-                if (indexInText == lowerCaseText.length()) {
-                    // The one successful return condition.
-                    return buildFindMatch(currentNode, indexInCurrentNode - lowerCaseText.length());
-                }
-                if (indexInCurrentNode == content.length()) {
-                    // this has to support 2 cases:
-                    // - current search is still going on and needs to continue on the next source or
-                    // - current search has been reset and we will start a new one on the next source.
-                    Text nextNode = nodeBrowser.next(currentNode);
-                    // only add if the searchis on going ie if indexInText > 0;
-                    if (nextNode != null && indexInText > 0) {
-                        previousNodes.add(currentNode);
+                    if (indexInCurrentNode < content.length()) {
+
+                        if (lowerCaseText.charAt(indexInText) == Character.toLowerCase(content.charAt(indexInCurrentNode))) {
+                            // current search still going on
+                            indexInText++;
+                            indexInCurrentNode++;
+                        } else {
+                            // mismatch, reset and start a new search
+                            previousNodes.clear();
+                            // Make sure indexInCurrentNode is not < 0 else  https://github.com/f-delahaye/idea-browser/issues/2
+                            indexInCurrentNode = Math.max(indexInCurrentNode - indexInText + 1, 0);
+                            indexInText = 0;
+                        }
                     }
-                    currentNode = nextNode;
-                    indexInCurrentNode = 0;
+                    if (indexInText == lowerCaseText.length()) {
+                        // The one successful return condition.
+                        return buildFindMatch(currentNode, indexInCurrentNode - lowerCaseText.length());
+                    }
+                    if (indexInCurrentNode == content.length()) {
+                        // this has to support 2 cases:
+                        // - current search is still going on and needs to continue on the next source or
+                        // - current search has been reset and we will start a new one on the next source.
+                        Text nextNode = nodeBrowser.next(currentNode);
+                        nodeIndex++;
+                        // only add if the searchis on going ie if indexInText > 0;
+                        if (nextNode != null && indexInText > 0) {
+                            previousNodes.add(currentNode);
+                        }
+                        currentNode = nextNode;
+                        indexInCurrentNode = 0;
+                    }
+                } catch (Exception e) {
+                    throw new RuntimeException(String.format("Failed to search '%s' in '%s', nodeIndex was %d, indexInCurrentNode was %d, indexInText was %d", lowerCaseText, getContent(currentNode), nodeIndex, indexInCurrentNode, indexInText), e);
                 }
             }
         }

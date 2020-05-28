@@ -130,14 +130,12 @@ public class SimpleFinderTest {
         assertEquals(new FindMatch(third, 0, 2), finder.findNext("ob"));
     }
 
-    // TODO FIXME
     @Test
-    public void firstMatchAtEndOfFirstNodeThenSecondMatchWithLongerText() {
+    public void startMatchAtEndOfFirstNodeButSecondNodeDoesntFinishTheMatch() {
         Text first = fooNode;
         Text second = barNode;
         when(nodeBrowser.first()).thenReturn(first);
         when(nodeBrowser.next(first)).thenReturn(second);
-        assertEquals(new FindMatch(first, 1, first, 3, Collections.emptyList()), finder.findNext("oo"));
-        assertEquals(new FindMatch(first, 1, second, 1, Collections.emptyList()), finder.findNext("oob"));
+        assertNull(finder.findNext("ooc"));
     }
 }
